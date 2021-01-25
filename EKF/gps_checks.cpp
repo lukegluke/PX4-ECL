@@ -63,8 +63,8 @@ bool Ekf::collect_gps(const gps_message &gps)
 
 	if (!_NED_origin_initialised && _gps_checks_passed) {
 		// If we have good GPS data set the origin's WGS-84 position to the last gps fix
-		const double lat = gps.lat * 1.0e-7;
-		const double lon = gps.lon * 1.0e-7;
+		const double lat = gps.lat;
+		const double lon = gps.lon;
 		map_projection_init_timestamped(&_pos_ref, lat, lon, _time_last_imu);
 
 		// if we are already doing aiding, correct for the change in position since the EKF started navigationg
@@ -75,7 +75,7 @@ bool Ekf::collect_gps(const gps_message &gps)
 		}
 
 		// Take the current GPS height and subtract the filter height above origin to estimate the GPS height of the origin
-		_gps_alt_ref = 1e-3f * (float)gps.alt + _state.pos(2);
+		_gps_alt_ref = gps.alt + _state.pos(2);
 		_NED_origin_initialised = true;
 		_earth_rate_NED = calcEarthRateNED((float)_pos_ref.lat_rad);
 		_last_gps_origin_time_us = _time_last_imu;
@@ -118,8 +118,8 @@ bool Ekf::collect_gps(const gps_message &gps)
 			const bool declination_was_valid = ISFINITE(_mag_declination_gps);
 
 			// If we have good GPS data set the origin's WGS-84 position to the last gps fix
-			const double lat = gps.lat * 1.0e-7;
-			const double lon = gps.lon * 1.0e-7;
+			const double lat = gps.lat;
+			const double lon = gps.lon;
 
 			// set the magnetic field data returned by the geo library using the current GPS position
 			_mag_declination_gps = get_mag_declination_radians(lat, lon);
@@ -176,8 +176,8 @@ bool Ekf::gps_is_good(const gps_message &gps)
 	const float filter_coef = dt / filt_time_const;
 
 	// The following checks are only valid when the vehicle is at rest
-	const double lat = gps.lat * 1.0e-7;
-	const double lon = gps.lon * 1.0e-7;
+	const double lat = gps.lat;
+	const double lon = gps.lon;
 
 	if (!_control_status.flags.in_air && _control_status.flags.vehicle_at_rest) {
 		// Calculate position movement since last measurement
@@ -191,12 +191,12 @@ bool Ekf::gps_is_good(const gps_message &gps)
 		} else {
 			// no previous position has been set
 			map_projection_init_timestamped(&_gps_pos_prev, lat, lon, _time_last_imu);
-			_gps_alt_prev = 1e-3f * (float)gps.alt;
+			_gps_alt_prev = gps.alt;
 		}
 
 		// Calculate the horizontal and vertical drift velocity components and limit to 10x the threshold
 		const Vector3f vel_limit(_params.req_hdrift, _params.req_hdrift, _params.req_vdrift);
-		Vector3f pos_derived(delta_pos_n, delta_pos_e, (_gps_alt_prev - 1e-3f * (float)gps.alt));
+		Vector3f pos_derived(delta_pos_n, delta_pos_e, (_gps_alt_prev - gps.alt));
 		pos_derived = matrix::constrain(pos_derived / dt, -10.0f * vel_limit, 10.0f * vel_limit);
 
 		// Apply a low pass filter
@@ -239,7 +239,7 @@ bool Ekf::gps_is_good(const gps_message &gps)
 
 	// save GPS fix for next time
 	map_projection_init_timestamped(&_gps_pos_prev, lat, lon, _time_last_imu);
-	_gps_alt_prev = 1e-3f * (float)gps.alt;
+	_gps_alt_prev = gps.alt;
 
 	// Check  the filtered difference between GPS and EKF vertical velocity
 	const float vz_diff_limit = 10.0f * _params.req_vdrift;

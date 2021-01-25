@@ -34,17 +34,17 @@ void Gps::setData(const gps_message& gps)
 	_gps_data = gps;
 }
 
-void Gps::setAltitude(int32_t alt)
+void Gps::setAltitude(float alt)
 {
 	_gps_data.alt = alt;
 }
 
-void Gps::setLatitude(int32_t lat)
+void Gps::setLatitude(double lat)
 {
 	_gps_data.lat = lat;
 }
 
-void Gps::setLongitude(int32_t lon)
+void Gps::setLongitude(double lon)
 {
 	_gps_data.lon = lon;
 }
@@ -79,7 +79,7 @@ void Gps::setPdop(float pdop)
 
 void Gps::stepHeightByMeters(float hgt_change)
 {
-	_gps_data.alt += hgt_change * 1e3f;
+	_gps_data.alt += hgt_change;
 }
 
 void Gps::stepHorizontalPositionByMeters(Vector2f hpos_change)
@@ -90,13 +90,13 @@ void Gps::stepHorizontalPositionByMeters(Vector2f hpos_change)
 	uint64_t time;
 	float alt;
 	_ekf->get_ekf_origin(&time, &origin, &alt);
-	map_projection_project(&origin, _gps_data.lat * 1e-7, _gps_data.lon * 1e-7, &hposN_curr, &hposE_curr);
+	map_projection_project(&origin, _gps_data.lat, _gps_data.lon, &hposN_curr, &hposE_curr);
 	Vector2f hpos_new = Vector2f{hposN_curr, hposE_curr} + hpos_change;
 	double lat_new;
 	double lon_new;
 	map_projection_reproject(&origin, hpos_new(0), hpos_new(1), &lat_new, &lon_new);
-	_gps_data.lon = static_cast<int32_t>(lon_new * 1e7);
-	_gps_data.lat = static_cast<int32_t>(lat_new * 1e7);
+	_gps_data.lon = lon_new;
+	_gps_data.lat = lat_new;
 }
 
 gps_message Gps::getDefaultGpsData()
