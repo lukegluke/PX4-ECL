@@ -468,6 +468,7 @@ private:
 	float _gps_error_norm{1.0f};		///< normalised gps error
 	uint32_t _min_gps_health_time_us{10000000}; ///< GPS is marked as healthy only after this amount of time
 	bool _gps_checks_passed{false};		///> true when all active GPS checks have passed
+	uint8_t _gps_fix_quality{0};
 
 	// Variables used to publish the WGS-84 location of the EKF local NED origin
 	uint64_t _last_gps_origin_time_us{0};	///< time the origin was last set (uSec)
@@ -475,7 +476,7 @@ private:
 
 	// Variables used by the initial filter alignment
 	bool _is_first_imu_sample{true};
-	uint32_t _baro_counter{0};		///< number of baro samples read during initialisation
+	uint32_t _hgt_counter{0};		///< number of hgt samples read during initialisation
 	uint32_t _mag_counter{0};		///< number of magnetometer samples read during initialisation
 	AlphaFilter<Vector3f> _accel_lpf{0.1f};	///< filtered accelerometer measurement used to align tilt (m/s/s)
 	AlphaFilter<Vector3f> _gyro_lpf{0.1f};	///< filtered gyro measurement used for alignment excessive movement check (rad/sec)

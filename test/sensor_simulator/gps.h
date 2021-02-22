@@ -54,9 +54,9 @@ public:
 	void stepHeightByMeters(float hgt_change);
 	void stepHorizontalPositionByMeters(Vector2f hpos_change);
 	void setPositionRateNED(const Vector3f& rate) { _gps_pos_rate = rate; }
-	void setAltitude(int32_t alt);
-	void setLatitude(int32_t lat);
-	void setLongitude(int32_t lon);
+	void setAltitude(float alt);
+	void setLatitude(double lat);
+	void setLongitude(double lon);
 	void setVelocity(const Vector3f& vel);
 	void setYaw(float yaw);
 	void setYawOffset(float yaw);

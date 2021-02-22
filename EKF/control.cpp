@@ -597,6 +597,7 @@ void Ekf::controlGpsFusion()
 			   could have been caused by bad GPS.
 			*/
 
+			/*
 			const bool recent_takeoff_nav_failure = _control_status.flags.in_air &&
 								!isTimedOut(_time_last_on_ground_us, 30000000) &&
 								isTimedOut(_time_last_hor_vel_fuse, _params.EKFGSF_reset_delay) &&
@@ -649,17 +650,14 @@ void Ekf::controlGpsFusion()
 					_time_last_of_fuse = _time_last_imu;
 				}
 
-			} else if (do_vel_pos_reset) {
-				// use GPS velocity data to check and correct yaw angle if a FW vehicle
-				if (_control_status.flags.fixed_wing && _control_status.flags.in_air) {
-					// if flying a fixed wing aircraft, do a complete reset that includes yaw
-					_control_status.flags.mag_aligned_in_flight = realignYawGPS();
-				}
+			} else
+			*/
 
+			if (do_vel_pos_reset) {
 				resetVelocity();
 				resetHorizontalPosition();
 				_velpos_reset_request = false;
-				ECL_WARN_TIMESTAMPED("GPS fusion timeout - reset to GPS");
+				ECL_WARN_TIMESTAMPED("GPS fusion reset");
 
 				// Reset the timeout counters
 				_time_last_hor_pos_fuse = _time_last_imu;
@@ -755,6 +753,8 @@ void Ekf::controlGpsYawFusion()
 		}
 	}
 
+	/* Temporary do not turn off yaw fusion. Issue https://github.com/PX4/ecl/issues/905
+	 *
 	// Check if the data is constantly fused by the estimator,
 	// if not, declare the sensor faulty and stop the fusion
 	// By doing this, another source of yaw aiding is allowed to start
@@ -763,6 +763,7 @@ void Ekf::controlGpsYawFusion()
 		_is_gps_yaw_faulty = true;
 		stopGpsYawFusion();
 	}
+	*/
 }
 
 void Ekf::controlHeightSensorTimeouts()
@@ -875,6 +876,34 @@ void Ekf::controlHeightSensorTimeouts()
 				request_height_reset = true;
 				failing_height_source = "ev";
 				new_height_source = "baro";
+			}
+		} else {
+			if (_params.vdist_sensor_type == VDIST_SENSOR_GPS) {
+				// check if GPS height is available
+				const gpsSample &gps_init = _gps_buffer.get_newest();
+				const bool gps_hgt_accurate = (gps_init.vacc < _params.req_vacc);
+
+				// check for inertial sensing errors in the last BADACC_PROBATION seconds
+				const bool prev_bad_vert_accel = isRecent(_time_bad_vert_accel, BADACC_PROBATION);
+
+				// reset to GPS if adequate GPS data is available and the timeout cannot be blamed on IMU data
+				const bool reset_to_gps = !_gps_hgt_intermittent &&
+						    ((gps_hgt_accurate && !prev_bad_vert_accel) || _baro_hgt_faulty);
+
+				if (reset_to_gps) {
+					// set height sensor health
+					_baro_hgt_faulty = true;
+
+					startGpsHgtFusion();
+
+					//reset sensor offset because height can drift quite far away
+					_hgt_sensor_offset = 0.0f;
+
+					request_height_reset = true;
+					failing_height_source = "";
+					new_height_source = "gps";
+
+				}
 			}
 		}
 

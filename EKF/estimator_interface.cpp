@@ -202,7 +202,7 @@ void EstimatorInterface::setGpsData(const gps_message &gps)
 		gps_sample_new.hacc = gps.eph;
 		gps_sample_new.vacc = gps.epv;
 
-		gps_sample_new.hgt = (float)gps.alt * 1e-3f;
+		gps_sample_new.hgt = gps.alt;
 
 		gps_sample_new.yaw = gps.yaw;
 
@@ -217,7 +217,7 @@ void EstimatorInterface::setGpsData(const gps_message &gps)
 		if (collect_gps(gps)) {
 			float lpos_x = 0.0f;
 			float lpos_y = 0.0f;
-			map_projection_project(&_pos_ref, (gps.lat / 1.0e7), (gps.lon / 1.0e7), &lpos_x, &lpos_y);
+			map_projection_project(&_pos_ref, gps.lat, gps.lon, &lpos_x, &lpos_y);
 			gps_sample_new.pos(0) = lpos_x;
 			gps_sample_new.pos(1) = lpos_y;
 

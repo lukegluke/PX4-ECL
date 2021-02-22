@@ -169,17 +169,33 @@ bool Ekf::initialiseFilter()
 		}
 	}
 
-	// accumulate enough height measurements to be confident in the quality of the data
-	if (_baro_buffer.pop_first_older_than(_imu_sample_delayed.time_us, &_baro_sample_delayed)) {
-		if (_baro_sample_delayed.time_us != 0) {
-			if (_baro_counter == 0) {
-				_baro_hgt_offset = _baro_sample_delayed.hgt;
+	if (_params.vdist_sensor_type == VDIST_SENSOR_BARO) {
+		// accumulate enough height measurements to be confident in the quality of the data
+		if (_baro_buffer.pop_first_older_than(_imu_sample_delayed.time_us, &_baro_sample_delayed)) {
+			if (_baro_sample_delayed.time_us != 0) {
+				if (_hgt_counter == 0) {
+					_baro_hgt_offset = _baro_sample_delayed.hgt;
 
-			} else {
-				_baro_hgt_offset = 0.9f * _baro_hgt_offset + 0.1f * _baro_sample_delayed.hgt;
+				} else {
+					_baro_hgt_offset = 0.9f * _baro_hgt_offset + 0.1f * _baro_sample_delayed.hgt;
+				}
+
+				_hgt_counter++;
 			}
+		}
 
-			_baro_counter++;
+	} else if (_params.vdist_sensor_type == VDIST_SENSOR_GPS) {
+		if (_gps_buffer.pop_first_older_than(_imu_sample_delayed.time_us, &_gps_sample_delayed)) {
+			if (_gps_sample_delayed.time_us != 0) {
+				if (_hgt_counter == 0) {
+					_baro_hgt_offset = _gps_sample_delayed.hgt;
+
+				} else {
+					_baro_hgt_offset = 0.9f * _baro_hgt_offset + 0.1f * _gps_sample_delayed.hgt;
+				}
+
+				_hgt_counter++;
+			}
 		}
 	}
 
@@ -190,13 +206,18 @@ bool Ekf::initialiseFilter()
 		}
 	}
 
-	if (_baro_counter < _obs_buffer_length) {
+	if (_hgt_counter < _obs_buffer_length) {
 		// not enough baro samples accumulated
 		return false;
 	}
 
-	// we use baro height initially and switch to GPS/range/EV finder later when it passes checks.
-	setControlBaroHeight();
+	if (_params.vdist_sensor_type == VDIST_SENSOR_BARO) {
+		// we use baro height initially and switch to GPS/range/EV finder later when it passes checks.
+		setControlBaroHeight();
+	} else if (_params.vdist_sensor_type == VDIST_SENSOR_GPS) {
+		// without baro sensor use gps height initially
+		setControlGPSHeight();
+	}
 
 	if (!initialiseTilt()) {
 		return false;

@@ -62,9 +62,9 @@ enum class velocity_frame_t : uint8_t {
 
 struct gps_message {
 	uint64_t time_usec{0};
-	int32_t lat;		///< Latitude in 1E-7 degrees
-	int32_t lon;		///< Longitude in 1E-7 degrees
-	int32_t alt;		///< Altitude in 1E-3 meters (millimeters) above MSL
+	double lat;		///< Latitude in degrees
+	double lon;		///< Longitude in degrees
+	float alt;		///< Altitude in meters above MSL
 	float yaw;		///< yaw angle. NaN if not set (used for dual antenna GPS), (rad, [-PI, PI])
 	float yaw_offset;	///< Heading/Yaw offset for dual antenna GPS - refer to description for GPS_YAW_OFFSET
 	uint8_t fix_type;	///< 0-1: no fix, 2: 2D fix, 3: 3D fix, 4: RTCM code differential, 5: Real-Time Kinematic
@@ -369,7 +369,7 @@ struct parameters {
 	int32_t check_mag_strength{0};
 
 	// Parameters used to control when yaw is reset to the EKF-GSF yaw estimator value
-	float EKFGSF_tas_default{15.0f};	///< default airspeed value assumed during fixed wing flight if no airspeed measurement available (m/s)
+	float EKFGSF_tas_default{0.0f};	///< default airspeed value assumed if no airspeed measurement available (m/s)
 	unsigned EKFGSF_reset_delay{1000000};	///< Number of uSec of bad innovations on main filter in immediate post-takeoff phase before yaw is reset to EKF-GSF value
 	float EKFGSF_yaw_err_max{0.262f}; 	///< Composite yaw 1-sigma uncertainty threshold used to check for convergence (rad)
 	unsigned EKFGSF_reset_count_limit{3};	///< Maximum number of times the yaw can be reset to the EKF-GSF yaw estimator value

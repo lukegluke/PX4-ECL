@@ -1607,7 +1607,7 @@ void Ekf::runYawEKFGSF()
 	}
 
 	const Vector3f imu_gyro_bias = getGyroBias();
-	_yawEstimator.update(_imu_sample_delayed, _control_status.flags.in_air, TAS, imu_gyro_bias);
+	_yawEstimator.update(_imu_sample_delayed, _control_status.flags.tilt_align, TAS, imu_gyro_bias);
 
 	// basic sanity check on GPS velocity data
 	if (_gps_data_ready && _gps_sample_delayed.vacc > FLT_EPSILON &&
